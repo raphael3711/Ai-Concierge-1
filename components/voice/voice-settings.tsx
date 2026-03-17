@@ -4,7 +4,16 @@ import React, { useState } from 'react';
 import { useVoice } from '@/lib/voice-context';
 
 export function VoiceSettings() {
-  const { handsFreeMode, wakePhrase, setHandsFreeMode, setWakePhrase } = useVoice();
+  const {
+    handsFreeMode,
+    wakePhrase,
+    autoReadAnswers,
+    voiceOutputEnabled,
+    setHandsFreeMode,
+    setWakePhrase,
+    setAutoReadAnswers,
+    setVoiceOutputEnabled,
+  } = useVoice();
   const [isOpen, setIsOpen] = useState(false);
   const [tempWakePhrase, setTempWakePhrase] = useState(wakePhrase);
 
@@ -166,6 +175,58 @@ export function VoiceSettings() {
             </div>
           </div>
         )}
+
+        {/* Auto-Read Answers Toggle */}
+        <div className="space-y-3 pt-3 border-t border-border">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-foreground">
+                Auto-Read Answers
+              </label>
+              <p className="text-xs text-muted-foreground">
+                Automatically read responses aloud
+              </p>
+            </div>
+            <button
+              onClick={() => setAutoReadAnswers(!autoReadAnswers)}
+              className={`relative w-12 h-7 rounded-full transition-colors ${
+                autoReadAnswers ? 'bg-amber-600' : 'bg-muted'
+              }`}
+            >
+              <div
+                className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                  autoReadAnswers ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+
+        {/* Voice Output Toggle */}
+        <div className="space-y-3 pt-3 border-t border-border">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-foreground">
+                Voice Output
+              </label>
+              <p className="text-xs text-muted-foreground">
+                Enable speaker for responses
+              </p>
+            </div>
+            <button
+              onClick={() => setVoiceOutputEnabled(!voiceOutputEnabled)}
+              className={`relative w-12 h-7 rounded-full transition-colors ${
+                voiceOutputEnabled ? 'bg-amber-600' : 'bg-muted'
+              }`}
+            >
+              <div
+                className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                  voiceOutputEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
