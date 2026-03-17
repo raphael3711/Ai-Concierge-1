@@ -14,7 +14,15 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "AI Concierge",
-  description: "Your intelligent AI assistant",
+  description: "Your intelligent AI assistant for bookings, recommendations, and local information",
+}
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#09090b",
 }
 
 export default function RootLayout({

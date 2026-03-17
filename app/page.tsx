@@ -1,12 +1,11 @@
+"use client"
+
+import { ChatContainer } from "@/components/chat/chat-container"
+
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-8">
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold tracking-tight">AI Concierge</h1>
-        <p className="text-muted-foreground text-lg">
-          Your intelligent AI assistant is ready to help.
-        </p>
-      </div>
+    <main className="h-dvh w-full max-w-lg mx-auto flex flex-col bg-background md:border-x md:border-border">
+      <ChatContainer />
     </main>
   )
 }
