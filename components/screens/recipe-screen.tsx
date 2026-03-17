@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { t, type Language } from '@/lib/translations';
+import { ImageCarousel } from '@/components/ui/image-carousel';
 
 interface RecipeScreenProps {
   language: Language;
@@ -12,6 +13,7 @@ interface RecipeData {
   name: Record<Language, string>;
   servings: number;
   timeMin: number;
+  images: string[];
   sommelierNote: Record<Language, string>;
   ingredients: Record<Language, string[]>;
   steps: Record<Language, string[]>;
@@ -23,6 +25,11 @@ const RECIPES: Record<string, RecipeData> = {
     name: { uk: 'Яловичина Бургундська', ru: 'Говядина по-бургундски', en: 'Beef Bourguignon' },
     servings: 4,
     timeMin: 120,
+    images: [
+      'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&h=600&fit=crop',
+      'https://images.unsplash.com/photo-1432139555190-58524dae6a55?w=800&h=600&fit=crop',
+      'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&h=600&fit=crop',
+    ],
     sommelierNote: {
       uk: 'Пінло Нуар або Бургундське 2018–2020 року підкреслять насичений смак тушкованого м\'яса.',
       ru: 'Пино Нуар или Бургундское 2018–2020 подчеркнут насыщенный вкус тушёного мяса.',
@@ -48,6 +55,11 @@ const RECIPES: Record<string, RecipeData> = {
     name: { uk: 'Устриці з вершковим соусом', ru: 'Устрицы с кремовым соусом', en: 'Oysters with Cream Sauce' },
     servings: 2,
     timeMin: 20,
+    images: [
+      'https://images.unsplash.com/photo-1599599810694-b5ac4dd4e4a0?w=800&h=600&fit=crop',
+      'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=600&fit=crop',
+      'https://images.unsplash.com/photo-1599599810694-b5ac4dd4e4a0?w=800&h=600&fit=crop',
+    ],
     sommelierNote: {
       uk: 'Брют Шампань або Кава ідеально доповнять морську свіжість устриць завдяки своїй кислотності.',
       ru: 'Брют Шампань или Кава идеально дополнят морскую свежесть устриц благодаря своей кислотности.',
@@ -73,6 +85,11 @@ const RECIPES: Record<string, RecipeData> = {
     name: { uk: 'Тірамісу класичний', ru: 'Классический тирамису', en: 'Classic Tiramisu' },
     servings: 6,
     timeMin: 45,
+    images: [
+      'https://images.unsplash.com/photo-1571115177098-24ec42ed204d?w=800&h=600&fit=crop',
+      'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&h=600&fit=crop',
+      'https://images.unsplash.com/photo-1571115177098-24ec42ed204d?w=800&h=600&fit=crop',
+    ],
     sommelierNote: {
       uk: 'Подавайте з Americano або міцним еспресо. Marsala у рецепті дає теплий мигдалевий фінал.',
       ru: 'Подавайте с Americano или крепким эспрессо. Marsala в рецепте даёт тёплый миндальный финал.',
@@ -104,8 +121,13 @@ export function RecipeScreen({ language, category }: RecipeScreenProps) {
 
   return (
     <div className="w-full bg-background flex flex-col pb-28">
+      {/* Image carousel */}
+      <div className="px-5 pt-6 pb-4">
+        <ImageCarousel images={recipe.images} alt={recipe.name.en} />
+      </div>
+
       {/* Header card */}
-      <div className="px-5 pt-6 pb-5">
+      <div className="px-5 pb-5">
         <div className="rounded-3xl border border-accent/30 bg-card p-6 space-y-3">
           <p className="text-xs text-accent uppercase tracking-widest font-semibold">
             {t('recipe.pairing_for', language)} &mdash; {t(`bev.${category ?? 'wine'}`, language)}
