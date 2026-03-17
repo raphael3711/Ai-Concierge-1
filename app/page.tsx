@@ -1,11 +1,14 @@
-"use client"
+'use client';
 
-import { ChatContainer } from "@/components/chat/chat-container"
+import { VoiceProvider } from '@/lib/voice-context';
+import { VoiceInterface } from '@/components/voice/voice-interface';
 
 export default function Home() {
   return (
-    <main className="h-dvh w-full max-w-lg mx-auto flex flex-col bg-background md:border-x md:border-border">
-      <ChatContainer />
-    </main>
-  )
+    <VoiceProvider>
+      <main className="h-dvh w-full max-w-2xl mx-auto flex flex-col bg-background">
+        <VoiceInterface />
+      </main>
+    </VoiceProvider>
+  );
 }
