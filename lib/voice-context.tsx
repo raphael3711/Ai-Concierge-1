@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useRef, useCallback } from 'react';
 
-export type VoiceState = 'idle' | 'permission-denied' | 'listening' | 'processing' | 'speaking' | 'error';
+export type VoiceState = 'idle' | 'permission-denied' | 'listening' | 'processing' | 'speaking' | 'error' | 'listening-passive';
 
 interface VoiceContextType {
   state: VoiceState;
@@ -11,8 +11,14 @@ interface VoiceContextType {
   isListening: boolean;
   isSpeaking: boolean;
   error: string | null;
+  handsFreeMode: boolean;
+  wakePhrase: string;
+  setHandsFreeMode: (enabled: boolean) => void;
+  setWakePhrase: (phrase: string) => void;
   startListening: () => Promise<void>;
   stopListening: () => void;
+  startPassiveListening: () => Promise<void>;
+  stopPassiveListening: () => void;
   speakResponse: (text: string) => void;
   stopSpeaking: () => void;
   resetState: () => void;
@@ -30,10 +36,15 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
   const [response, setResponse] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [handsFreeMode, setHandsFreeMode] = useState(false);
+  const [wakePhrase, setWakePhrase] = useState('Hey Concierge');
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const passiveMediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const passiveAudioChunksRef = useRef<Blob[]>([]);
+  const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const synth = useRef(window.speechSynthesis);
 
   const startListening = useCallback(async () => {
@@ -106,6 +117,80 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const startPassiveListening = useCallback(async () => {
+    try {
+      setState('listening-passive');
+      setError(null);
+      passiveAudioChunksRef.current = [];
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      passiveMediaRecorderRef.current = mediaRecorder;
+
+      mediaRecorder.ondataavailable = (e) => {
+        passiveAudioChunksRef.current.push(e.data);
+      };
+
+      mediaRecorder.onstart = () => {
+        console.log('[v0] Passive listening started');
+        // Set inactivity timeout (20 seconds)
+        if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
+        inactivityTimeoutRef.current = setTimeout(() => {
+          if (passiveMediaRecorderRef.current && state === 'listening-passive') {
+            stopPassiveListening();
+          }
+        }, 20000);
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(passiveAudioChunksRef.current, { type: 'audio/wav' });
+        const text = await mockTranscribe(audioBlob);
+        
+        // Check if wake phrase detected
+        if (detectWakePhrase(text)) {
+          console.log('[v0] Wake phrase detected');
+          // Auto-trigger listening
+          await startListening();
+        } else {
+          setState('idle');
+        }
+      };
+
+      mediaRecorder.start();
+    } catch (err: any) {
+      if (err.name === 'NotAllowedError') {
+        setState('permission-denied');
+        setError('Microphone permission denied');
+      } else {
+        setState('error');
+        setError(err.message || 'Failed to access microphone');
+      }
+    }
+  }, [state]);
+
+  const stopPassiveListening = useCallback(() => {
+    if (passiveMediaRecorderRef.current && state === 'listening-passive') {
+      passiveMediaRecorderRef.current.stop();
+      passiveMediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+    }
+    if (inactivityTimeoutRef.current) {
+      clearTimeout(inactivityTimeoutRef.current);
+    }
+  }, [state]);
+
+  const detectWakePhrase = (text: string): boolean => {
+    // Simple fuzzy detection - in production use proper speech recognition
+    const normalized = text.toLowerCase().trim();
+    const phraseNormalized = wakePhrase.toLowerCase().trim();
+    
+    // Check for exact match or partial match with at least 60% similarity
+    if (normalized.includes(phraseNormalized)) return true;
+    
+    // Simple word-based detection
+    const wordsInPhrase = phraseNormalized.split(' ');
+    return wordsInPhrase.every(word => normalized.includes(word));
+  };
+
   const speakResponse = useCallback((text: string) => {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
@@ -149,8 +234,14 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
         isListening: state === 'listening',
         isSpeaking,
         error,
+        handsFreeMode,
+        wakePhrase,
+        setHandsFreeMode,
+        setWakePhrase,
         startListening,
         stopListening,
+        startPassiveListening,
+        stopPassiveListening,
         speakResponse,
         stopSpeaking,
         resetState,
