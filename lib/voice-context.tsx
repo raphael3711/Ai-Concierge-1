@@ -2,12 +2,25 @@
 
 import React, { createContext, useContext, useState, useRef, useCallback } from 'react';
 
-export type VoiceState = 'idle' | 'permission-denied' | 'listening' | 'processing' | 'speaking' | 'error' | 'listening-passive';
+export type VoiceState = 'idle' | 'requesting-permission' | 'listening' | 'transcribing' | 'thinking' | 'speaking' | 'error' | 'permission-denied' | 'listening-passive';
+
+export interface StructuredResponse {
+  title: string;
+  recommendation: string;
+  whyItFits: string;
+  alternatives: string[];
+  nonAlcoholicAlternative?: string;
+  budgetNote?: string;
+  calories?: number;
+  confidence?: number;
+  suggestedFollowUps?: string[];
+}
 
 interface VoiceContextType {
   state: VoiceState;
   transcript: string;
   response: string;
+  structuredResponse: StructuredResponse | null;
   isListening: boolean;
   isSpeaking: boolean;
   error: string | null;
@@ -15,6 +28,7 @@ interface VoiceContextType {
   wakePhrase: string;
   autoReadAnswers: boolean;
   voiceOutputEnabled: boolean;
+  conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }>;
   setHandsFreeMode: (enabled: boolean) => void;
   setWakePhrase: (phrase: string) => void;
   setAutoReadAnswers: (enabled: boolean) => void;
@@ -26,8 +40,11 @@ interface VoiceContextType {
   speakResponse: (text: string) => void;
   stopSpeaking: () => void;
   resetState: () => void;
+  replayAnswer: () => void;
+  askFollowUp: (question: string) => void;
   setTranscript: (text: string) => void;
   setResponse: (text: string) => void;
+  setStructuredResponse: (response: StructuredResponse | null) => void;
   mediaRecorder: MediaRecorder | null;
   audioContext: AudioContext | null;
 }
@@ -38,12 +55,14 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<VoiceState>('idle');
   const [transcript, setTranscript] = useState('');
   const [response, setResponse] = useState('');
+  const [structuredResponse, setStructuredResponse] = useState<StructuredResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [handsFreeMode, setHandsFreeMode] = useState(false);
   const [wakePhrase, setWakePhrase] = useState('Hey Concierge');
   const [autoReadAnswers, setAutoReadAnswers] = useState(true);
   const [voiceOutputEnabled, setVoiceOutputEnabled] = useState(true);
+  const [conversationHistory, setConversationHistory] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
